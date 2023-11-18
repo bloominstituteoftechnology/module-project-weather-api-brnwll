@@ -12,7 +12,7 @@ async function moduleProject4() {
   const todayPrecip = document.querySelector('#todayStats div:nth-child(2)')
   const todayHumidity = document.querySelector('#todayStats div:nth-child(3)')
   const todayWind = document.querySelector('#todayStats div:last-child')
-  // TODO: Daily forecast
+  const nextDayCards = document.querySelectorAll('.next-day')
   const locationCity = document.querySelector('#location div:first-child')
   const locationCountry = document.querySelector('#location div:last-child')
   const footer = document.querySelector('footer')
@@ -28,20 +28,27 @@ async function moduleProject4() {
     ["Partly Cloudy", "⛅️"]
   ]
 
-  // Weather widget is hidden upon initial load of page
-  weatherWidget.style.display = 'none'
+  const daysOfWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ]
+
+  weatherWidget.style.display = 'none' // widget is hidden upon initial page load
 
   citySelector.addEventListener('change', e => {
     disableWeatherWidget()
     axios.get(getWeatherDataURLfor(e.target.value))
     .then(res => {
       updateWeatherWidgetWith(res.data)
+      disableWeatherWidget(false)
     })
     .catch(err => {
       console.log(err.message)
-    })
-    .finally((res) => {
-      disableWeatherWidget(false)
     })
   })
 
@@ -53,9 +60,7 @@ async function moduleProject4() {
 
   function updateWeatherWidgetWith({current, forecast, location}) {
     updateTodayWith(current)
-    // TODO: Daily forecast
-    // console.log(forecast)
-    console.log(location)
+    nextDayCards.forEach((card, idx) => updateDailyForecast(card, forecast.daily[idx]))
     locationCity.textContent = location.city
     locationCountry.textContent = location.country
   }
@@ -70,16 +75,34 @@ async function moduleProject4() {
     wind_speed: wind
   }) {
     todayTemp.textContent = `${temp}°`
-    todayDescription.textContent = `${(descriptions.find(d => d[0] === desc))[1]}`
+    todayDescription.textContent = `${getEmojiFor(desc)}`
     todayMinMax.textContent = `${min}°/${max}°`
     todayPrecip.textContent = `Precipitation: ${precip * 100}%`
     todayHumidity.textContent = `Humidity: ${humidity}%`
     todayWind.textContent = `Wind: ${wind}m/s`
   }
 
+  // this function can be used for each of the 3 forecast days
+  function updateDailyForecast (card, {
+    date,
+    weather_description: desc,
+    temperature_min: min,
+    temperature_max: max,
+    precipitation_probability: precip
+  }) {
+    card.querySelector('div:first-child').textContent = daysOfWeek[new Date(date).getDay()]
+    card.querySelector('div:nth-child(2)').textContent = `${getEmojiFor(desc)}`
+    card.querySelector('div:nth-child(3)').textContent = `${min}°/${max}°`
+    card.querySelector('div:last-child').textContent = `Precipitation: ${precip * 100}%`
+  }
+
   function getWeatherDataURLfor(city) {
     city = city.replace(' ', '+')
     return `${API}?city=${city}`
+  }
+
+  function getEmojiFor(description) {
+    return (descriptions.find(d => d[0] === description))[1]
   }
 
   // 👆 WORK WORK ABOVE THIS LINE 👆
